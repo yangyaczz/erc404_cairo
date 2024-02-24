@@ -64,6 +64,7 @@ use core::serde::Serde;
 const NAME: felt252 = 'testtoken';
 const SYMBOL: felt252 = 'tt';
 const TOTALSUPPLY: u256 = 10_000_000_000_000_000_000_000;
+const OWNER: felt252 = 'owner';
 
 
 fn deploy_contract(name: felt252) -> ContractAddress {
@@ -79,17 +80,17 @@ fn deploy_contract(name: felt252) -> ContractAddress {
     Serde::serialize(@NAME, ref call_data);
     Serde::serialize(@SYMBOL, ref call_data);
     Serde::serialize(@TOTALSUPPLY, ref call_data);
+    Serde::serialize(@OWNER, ref call_data);
 
-    let contract_address = contract.precalculate_address(@call_data);
-    let owner = contract_address_const::<'owner'>();
-    start_prank(CheatTarget::One(contract_address), owner);
+    // let contract_address = contract.precalculate_address(@call_data);
+    // let owner = contract_address_const::<'owner'>();
+    // start_prank(CheatTarget::One(contract_address), owner);
 
     contract.deploy(@call_data).unwrap()
 }
 
 
 #[test]
-#[ignore]
 fn test_init() {
     let erc404_address = deploy_contract('ERC404');
     let erc404 = IERC404Dispatcher { contract_address: erc404_address };
@@ -97,11 +98,27 @@ fn test_init() {
     assert(erc404.name() == NAME, 'wrong name');
     assert(erc404.symbol() == SYMBOL, 'wrong symbol');
     assert(erc404.total_supply() == TOTALSUPPLY, 'wrong total supply');
+    assert(erc404.balance_of(OWNER.try_into().unwrap()) == TOTALSUPPLY, 'wrong owner balance');
+    assert(erc404.whitelist(OWNER.try_into().unwrap()), 'wrong whitelist');
 
-    println!("owner address {}", erc404.whitelist(123.try_into().unwrap()));
+    let mut i = 0;
+    loop {
+        if i == 10 {
+            break();
+        }
+        println!("rarity {}", erc404.token_uri(i)[0]);
+        println!("rarity {}", erc404.token_uri(i)[1]);
+        println!("rarity {}", erc404.token_uri(i)[2]);
+        println!("rarity {}", erc404.token_uri(i)[3]);
+        println!("rarity {}", erc404.token_uri(i)[4]);
+        println!("=================================");
+
+        i = i+1;
+    }
 }
 
 #[test]
+#[ignore]
 // #[should_panic(expected: ('ERC721: invalid token ID', ))]
 fn test_transfer() {
     let erc404_address = deploy_contract('ERC404');

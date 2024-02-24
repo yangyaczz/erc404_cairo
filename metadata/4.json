@@ -1,0 +1,11 @@
+{
+    "name": "erc404 cairo",
+    "description": "cairo erc404 dragon",
+    "attributes": [
+        {
+            "trait_type": "color",
+            "value": "blue"
+        }
+    ],
+    "image": "https://raw.githubusercontent.com/yangyaczz/erc404_cairo/main/picture/4.jpg"
+}

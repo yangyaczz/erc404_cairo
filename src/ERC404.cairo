@@ -57,6 +57,7 @@ trait IERC404<TState> {
     fn set_owner(ref self: TState, new_owner: ContractAddress);
     fn get_owned(self: @TState, owner: ContractAddress) -> Array<u256>;
     fn get_owned_index(self: @TState, token_id: u256) -> u32;
+    fn get_rarity(self: @TState, token_id: u256) -> u8;
 }
 
 
@@ -78,6 +79,8 @@ mod ERC404 {
 
     use core::panic_with_felt252;
     use core::integer::BoundedInt;
+    use core::poseidon::PoseidonTrait;
+    use core::hash::{HashStateTrait, HashStateExTrait};
 
     use alexandria_storage::list::{List, ListTrait};
 
@@ -94,6 +97,7 @@ mod ERC404 {
         ERC721_operator_approvals: LegacyMap<(ContractAddress, ContractAddress), bool>,
         ERC721_owned: LegacyMap<ContractAddress, List<u256>>,
         ERC721_owned_index: LegacyMap<u256, u32>,
+        rarity: LegacyMap<u256, u8>,
         whitelist: LegacyMap<ContractAddress, bool>,
         owner: ContractAddress,
     }
@@ -315,11 +319,30 @@ mod ERC404 {
             18
         }
         fn token_uri(self: @ContractState, token_id: u256) -> Array<felt252> {
-            assert(self._exists(token_id), Errors::INVALID_TOKEN_ID);
+            // assert(self._exists(token_id), Errors::INVALID_TOKEN_ID);
+
+            let hash = PoseidonTrait::new().update_with(token_id).finalize();
+            let seed256:u256 = hash.into();
+            let seed: u8 = (seed256 % 256).try_into().unwrap();
+            let mut rarity = 1;
+            if (seed <= 100) {
+                rarity = 1;
+            } else if (seed <= 160) {
+                rarity = 2;
+            } else if (seed <= 210) {
+                rarity = 3;
+            } else if (seed <= 240) {
+                rarity = 4;
+            } else if (seed <= 255) {
+                rarity = 5;
+            }
+            
             let mut uri_array = ArrayTrait::<felt252>::new();
             uri_array.append('https://raw.githubusercontent');
-            uri_array.append('.com/StarkParadise/Anime/main/');
-            uri_array.append(token_id.try_into().unwrap());
+            uri_array.append('.com/yangyaczz/erc404_cairo');
+            uri_array.append('/main/metadata/');
+            uri_array.append(rarity.try_into().unwrap());
+            uri_array.append('.json');
             uri_array
         }
 
@@ -393,6 +416,25 @@ mod ERC404 {
 
         fn get_owned_index(self: @ContractState, token_id: u256) -> u32 {
             self.ERC721_owned_index.read(token_id)
+        }
+
+        fn get_rarity(self: @ContractState, token_id: u256) -> u8 {
+            let hash = PoseidonTrait::new().update_with(token_id).finalize();
+            let seed256:u256 = hash.into();
+            let seed: u8 = (seed256 % 256).try_into().unwrap();
+            let mut rarity = 1;
+            if (seed <= 100) {
+                rarity = 1;
+            } else if (seed <= 160) {
+                rarity = 2;
+            } else if (seed <= 210) {
+                rarity = 3;
+            } else if (seed <= 240) {
+                rarity = 4;
+            } else if (seed <= 255) {
+                rarity = 5;
+            }
+            rarity
         }
     }
 
@@ -545,9 +587,30 @@ mod ERC404 {
 
             self.ERC721_owners.write(id, to);
 
+            // self._set_rarity(id);
+
             self.ERC721_owned_index.write(id, to_owned_list.len() - 1);
 
             self.emit(Transfer { from: starknet::Zeroable::zero(), to, token_id: id });
+        }
+
+        fn _set_rarity(ref self: ContractState, token_id: u256) {
+            let hash = PoseidonTrait::new().update_with(token_id).finalize();
+            let seed256:u256 = hash.into();
+            let seed: u8 = (seed256 % 256).try_into().unwrap();
+            let mut rarity: u8 = 1;
+            if (seed <= 100) {
+                rarity = 1;
+            } else if (seed <= 160) {
+                rarity = 2;
+            } else if (seed <= 210) {
+                rarity = 3;
+            } else if (seed <= 240) {
+                rarity = 4;
+            } else if (seed <= 255) {
+                rarity = 5;
+            }
+            self.rarity.write(token_id, rarity);
         }
     }
 
