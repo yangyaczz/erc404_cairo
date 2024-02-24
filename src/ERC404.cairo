@@ -58,11 +58,15 @@ trait IERC404<TState> {
     fn get_owned(self: @TState, owner: ContractAddress) -> Array<u256>;
     fn get_owned_index(self: @TState, token_id: u256) -> u32;
     fn get_rarity(self: @TState, token_id: u256) -> u8;
+    fn get_branch_rarity(self: @TState, owner: ContractAddress) -> Array<u8>;
+    fn claim(ref self: TState);
+    fn roll(ref self: TState, token_id: u256);
 }
 
 
 #[starknet::contract]
 mod ERC404 {
+    use core::traits::Into;
     use core::option::OptionTrait;
     use core::traits::TryInto;
     use openzeppelin::token::erc721::interface;
@@ -76,6 +80,7 @@ mod ERC404 {
     use starknet::ContractAddress;
     use starknet::get_caller_address;
     use starknet::Zeroable;
+    use starknet::info::get_contract_address;
 
     use core::panic_with_felt252;
     use core::integer::BoundedInt;
@@ -188,8 +193,11 @@ mod ERC404 {
         self.total_supply.write(total_supply);
         self.owner.write(owner);
 
-        self.ERC20_balances.write(owner, total_supply);
+        self.ERC20_balances.write(owner, total_supply / 2);
+        self.ERC20_balances.write(get_contract_address(), total_supply / 2);
+
         self.whitelist.write(owner, true);
+        self.whitelist.write(get_contract_address(), true);
     }
 
     #[abi(embed_v0)]
@@ -322,7 +330,7 @@ mod ERC404 {
             // assert(self._exists(token_id), Errors::INVALID_TOKEN_ID);
 
             let hash = PoseidonTrait::new().update_with(token_id).finalize();
-            let seed256:u256 = hash.into();
+            let seed256: u256 = hash.into();
             let seed: u8 = (seed256 % 256).try_into().unwrap();
             let mut rarity = 1;
             if (seed <= 100) {
@@ -336,7 +344,7 @@ mod ERC404 {
             } else if (seed <= 255) {
                 rarity = 5;
             }
-            
+
             let mut uri_array = ArrayTrait::<felt252>::new();
             uri_array.append('https://raw.githubusercontent');
             uri_array.append('.com/yangyaczz/erc404_cairo');
@@ -420,7 +428,7 @@ mod ERC404 {
 
         fn get_rarity(self: @ContractState, token_id: u256) -> u8 {
             let hash = PoseidonTrait::new().update_with(token_id).finalize();
-            let seed256:u256 = hash.into();
+            let seed256: u256 = hash.into();
             let seed: u8 = (seed256 % 256).try_into().unwrap();
             let mut rarity = 1;
             if (seed <= 100) {
@@ -435,6 +443,31 @@ mod ERC404 {
                 rarity = 5;
             }
             rarity
+        }
+
+        fn get_branch_rarity(self: @ContractState, owner: ContractAddress) -> Array<u8> {
+            let ids: Array<u256> = self.get_owned(owner);
+            let mut raritys: Array<u8> = ArrayTrait::new();
+
+            let mut i = 0;
+            loop {
+                if i == ids.len() {
+                    break ();
+                }
+                let r = self.get_rarity(*ids.at(i));
+                raritys.append(r);
+                i = i + 1;
+            };
+            raritys
+        }
+
+        fn claim(ref self: ContractState) {
+            let caller = get_caller_address();
+            self._transfer(get_contract_address(), caller, self._get_unit());
+        }
+
+        fn roll(ref self: ContractState, token_id: u256) {
+            // roll the token_id
         }
     }
 
@@ -596,7 +629,7 @@ mod ERC404 {
 
         fn _set_rarity(ref self: ContractState, token_id: u256) {
             let hash = PoseidonTrait::new().update_with(token_id).finalize();
-            let seed256:u256 = hash.into();
+            let seed256: u256 = hash.into();
             let seed: u8 = (seed256 % 256).try_into().unwrap();
             let mut rarity: u8 = 1;
             if (seed <= 100) {
