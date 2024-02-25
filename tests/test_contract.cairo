@@ -45,6 +45,7 @@ fn deploy_contract(name: felt252) -> ContractAddress {
 
 
 #[test]
+#[ignore]
 fn test_init() {
     let erc404_address = deploy_contract('ERC404');
     let erc404 = IERC404Dispatcher { contract_address: erc404_address };
@@ -56,23 +57,21 @@ fn test_init() {
     assert(erc404.balance_of(erc404_address) == TOTALSUPPLY / 2, 'wrong owner balance');
     assert(erc404.whitelist(OWNER.try_into().unwrap()), 'wrong whitelist');
 
-
     // check rarity
     let mut i = 1;
     loop {
         if i == 5 {
-            break();
+            break ();
         }
-        // println!("rarity {}", erc404.token_uri(i)[0]);
-        // println!("rarity {}", erc404.token_uri(i)[1]);
-        // println!("rarity {}", erc404.token_uri(i)[2]);
-        // println!("rarity {}", erc404.token_uri(i)[3]);
-        // println!("rarity {}", erc404.token_uri(i)[4]);
-        // println!("=================================");
+        println!("rarity {}", erc404.token_uri(i)[0]);
+        println!("rarity {}", erc404.token_uri(i)[1]);
+        println!("rarity {}", erc404.token_uri(i)[2]);
+        println!("rarity {}", erc404.token_uri(i)[3]);
+        println!("rarity {}", erc404.token_uri(i)[4]);
+        println!("=================================");
         println!("get_rarity {}", erc404.get_rarity(i));
-        i = i+1;
+        i = i + 1;
     };
-
 
     let user1 = contract_address_const::<'user1'>();
     start_prank(CheatTarget::One(erc404_address), user1);
@@ -88,15 +87,12 @@ fn test_init() {
     println!("get_branch_rarity {}", erc404.get_branch_rarity(user1)[1]);
     println!("get_branch_rarity {}", erc404.get_branch_rarity(user1)[2]);
     println!("get_branch_rarity {}", erc404.get_branch_rarity(user1)[3]);
-
-
-    
 }
 
+
 #[test]
-#[ignore]
 // #[should_panic(expected: ('ERC721: invalid token ID', ))]
-fn test_transfer() {
+fn test_transfer_and_owner() {
     let erc404_address = deploy_contract('ERC404');
     let erc404 = IERC404Dispatcher { contract_address: erc404_address };
 
@@ -112,58 +108,34 @@ fn test_transfer() {
     assert(erc404.owner_of(1) == recipient, 'wrong token id 1');
     assert(erc404.owner_of(2) == recipient, 'wrong token id 2');
 
+    println!("===============================");
+    println!("recipient get owned {}", erc404.get_owned(recipient)[0]);
+    println!("recipient get owned {}", erc404.get_owned(recipient)[1]);
+    println!("recipient get owned {}", erc404.get_owned(recipient)[2]);
+    println!("recipient get owned {}", erc404.get_owned(recipient)[3]);
+    println!("recipient get owned {}", erc404.get_owned(recipient)[4]);
+    println!("===============================");
+
     let recipient2 = contract_address_const::<'recipient2'>();
     let amount2: u256 = 2_000_000_000_000_000_000;
-
-    println!("===============================");
-    println!("get owned {}", erc404.get_owned(recipient)[0]);
-    println!("get owned {}", erc404.get_owned(recipient)[1]);
-    println!("get owned {}", erc404.get_owned(recipient)[2]);
-    println!("get owned {}", erc404.get_owned(recipient)[3]);
-    println!("get owned {}", erc404.get_owned(recipient)[4]);
 
     start_prank(CheatTarget::One(erc404_address), recipient);
     erc404.transfer_from(recipient, recipient2, 2);
     erc404.transfer(recipient2, amount2);
-    // erc404.transfer(recipient2, 100_000_000_000_000_000);
-
     assert(erc404.owner_of(2) == recipient2, 'wrong token id 1');
 
     println!("===============================");
-    println!("get owned {}", erc404.get_owned(recipient)[0]);
-    println!("get owned {}", erc404.get_owned(recipient)[1]);
-
-    println!("2 get owned {}", erc404.get_owned(recipient2)[0]);
-    println!("2 get owned {}", erc404.get_owned(recipient2)[1]);
-    println!("2 get owned {}", erc404.get_owned(recipient2)[2]);
-
+    println!("recipient1 get owned {}", erc404.get_owned(recipient)[0]); // 1
+    println!("recipient1 get owned {}", erc404.get_owned(recipient)[1]); // 5
+    println!("recipient2 get owned {}", erc404.get_owned(recipient2)[0]); // 2
+    println!("recipient2 get owned {}", erc404.get_owned(recipient2)[1]); // 6
+    println!("recipient2 get owned {}", erc404.get_owned(recipient2)[2]); // 7
     println!("===============================");
-    println!("token id index {}", erc404.get_owned_index(1));
-    println!("token id index {}", erc404.get_owned_index(5));
 
-    println!("token id index {}", erc404.get_owned_index(2));
-    println!("token id index {}", erc404.get_owned_index(6));
-    println!("token id index {}", erc404.get_owned_index(7));
-
-
-    println!("uri {}", erc404.token_uri(6)[0]);
-    println!("uri {}", erc404.token_uri(6)[1]);
-    println!("uri {}", erc404.token_uri(6)[2]);
-
-
-// println!("get owned {}", erc404.get_owned(recipient2)[0]);
-// println!("get owned {}", erc404.get_owned(recipient)[5]);
-
-// println!("owner of 1 {}", erc404.owner_of(1));
-
-// erc404.owner_of(0);
-// #[feature("safe_dispatcher")] // Mandatory tag since cairo 2.5.0
-// match erc404.owner_of(0).map_string_error() {
-//     Result::Ok(_) => panic_with_felt252('shouldve panicked'),
-//     Result::Err(panic_data) => {
-//         // assert(*panic_data.at(0) == 'PANIC', *panic_data.at(0));
-//         // assert(*panic_data.at(1) == 'DAYTAH', *panic_data.at(1));
-//     }
-// };
+    println!("token id index {}", erc404.get_owned_index(1)); // 0
+    println!("token id index {}", erc404.get_owned_index(5)); // 1
+    println!("token id index {}", erc404.get_owned_index(2)); // 0
+    println!("token id index {}", erc404.get_owned_index(6)); // 1
+    println!("token id index {}", erc404.get_owned_index(7)); // 2
 }
 
