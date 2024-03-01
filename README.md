@@ -41,4 +41,8 @@ Contract deployed:
 ### goerli contract detail:
 #### owner: `0x2a04b0c98668a48507e1c02a8f908c4023f5e05e28848572aef0910a0fa2250`
 #### class: `0x0632a3b3f136a77bfe137f49850e5fbe3a1fa0942dbf737bdace1541f3ab07fa`
-#### contract: `0x0180624f9918dc685cdc3cc2b31bb21b268fd9abc878d40fa1b487bff0f4bbcd`
+#### erc404 contract: `0x0180624f9918dc685cdc3cc2b31bb21b268fd9abc878d40fa1b487bff0f4bbcd`
+#### eth contract: `0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7`
+#### ammdex contract: `0x02a33096a5709ace5c41edc9e66926104caa607d31bea298cc96127270ad2313`
+#### nftmarket contract: `0x009cc31c2c057ffe2b34b7e2b34f7080c59868d4596bf797dfd91358137dbee4`
+
